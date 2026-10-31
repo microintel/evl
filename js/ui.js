@@ -37,6 +37,11 @@ const PATHS = {
   mixed: '<path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/>',
   play: '<path d="M7 4l13 8-13 8z"/>',
   alert: '<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>',
+  tools: '<rect x="3" y="8" width="18" height="12" rx="2"/><path d="M9 8V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/><path d="M11 12v3h2v-3"/>',
+  worksheet: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h3M13 12h3M8 16h3M13 16h3"/>',
+  reels: '<circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/>',
+  mute: '<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/>',
+  download: '<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
   inbox: '<path d="M3 13l3-8h12l3 8v6H3z"/><path d="M3 13h5l1 3h6l1-3h5"/>'
 };
 
@@ -110,7 +115,8 @@ export function defBlock(def, count = 2, word = '') {
     h('div', { class: 'def' },
       d.pos ? h('span', { class: 'pos' }, d.pos) : null,
       h('p', null, d.def),
-      d.example ? h('p', { class: 'ex' }, '“' + d.example + '”') : null)));
+      d.example ? h('p', { class: 'ex' }, '“' + d.example + '”') : null)),
+    def.examples && def.examples.length ? h('div', { class: 'def' }, h('span', { class: 'pos' }, 'examples'), def.examples.map(e => h('p', { class: 'ex' }, '“' + e + '”'))) : null);
 }
 
 export function kbd(k) { return h('span', { class: 'kbd' }, k); }

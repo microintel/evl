@@ -12,6 +12,12 @@ const key = w => w.toLowerCase();
 // undefined = not looked up yet, null = no definition exists, object = entry
 export const peek = w => mem.get(key(w));
 
+// Built-in (AI-written) meanings + examples from words_all.json: instant, offline, and never fetched.
+export function setLocal(word, ai) {
+  mem.set(key(word), { word: key(word), phonetic: '', ai: true,
+    defs: ai.meanings.map(m => ({ pos: m.pos, def: m.def, example: '' })), examples: ai.examples || [] });
+}
+
 export function lookup(word) {
   const k = key(word);
   if (mem.has(k)) return Promise.resolve(mem.get(k));

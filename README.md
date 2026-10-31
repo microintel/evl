@@ -30,6 +30,8 @@ It remembers what you know and what you find tricky, and brings words back at th
   - **Spelling** – type the word you hear or see
   - **Mixed** – a bit of everything
 - **Review at the right time** – Words you know well come back less often; words you miss come back sooner. Open **Review** to see what's due today.
+- **Tools** – The Tools tab holds **Review** and **Worksheet**.
+- **Printable worksheet** – In Tools → Worksheet, pick a day range, a word count, or all days, then download a PDF with each day's words (numbered) and 30 tick boxes per word, like an attendance sheet.
 - **Set a daily goal** – Choose 10, 20, 30, 50 or 100 words a day and watch your progress ring fill up.
 - **Build a streak** – Study every day to keep your streak going.
 - **Track your progress** – See how many words you have mastered, your accuracy, a 14-day activity chart, and the words you find trickiest.

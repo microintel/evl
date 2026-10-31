@@ -171,7 +171,7 @@ export function study(root, { list, mode }) {
         later(advance, 800);
       } else {
         result.className = 'spell-result bad';
-        result.replaceChildren((!skip && guess) ? h('s', { class: 'muted' }, guess) : null, h('strong', null, w.word));
+        result.replaceChildren(...[(!skip && guess) ? h('s', { class: 'muted' }, guess) : null, h('strong', null, w.word)].filter(Boolean));
         actions.replaceChildren(h('button', { class: 'btn primary', onclick: advance }, 'Continue', kbd('Enter')));
         keys = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); advance(); } };
         setTimeout(() => document.activeElement?.blur?.(), 0);
