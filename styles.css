@@ -311,6 +311,11 @@ body.studying #view { padding: 0; max-width: none; }
 :root[data-theme="dark"] .seg button.on { background: var(--surface2); }
 :root[data-theme="dark"] .toolbar, :root[data-theme="dark"] #nav { background: #000; }
 
+/* Mobile bottom tab bar: tab options have no border (active tab is shown by color only) */
+@media (max-width: 760px) {
+  #nav .nav-link, #nav .nav-link.active { border: 0; box-shadow: none; outline: none; background: none; }
+}
+
 /* ---------- states: loading / empty / error / success ---------- */
 .spinner { display: inline-block; width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent); animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
