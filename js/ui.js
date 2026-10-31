@@ -42,6 +42,7 @@ const PATHS = {
   reels: '<circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/>',
   mute: '<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/>',
   download: '<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
+  copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',
   inbox: '<path d="M3 13l3-8h12l3 8v6H3z"/><path d="M3 13h5l1 3h6l1-3h5"/>'
 };
 
@@ -143,4 +144,25 @@ export function state(kind, label, action) {
     ico,
     label ? h('div', { class: 'state-label' }, label) : null,
     action ? h('button', { class: 'btn', onclick: action.onClick }, action.label) : null);
+}
+
+
+// Copy a list's words to the clipboard (one per line) and confirm with a toast.
+export async function copyWords(words, label = 'words') {
+  const text = words.map(w => w.word).join(',');
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+    document.body.append(ta);
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch {}
+    ta.remove();
+    if (!ok) return toast('Copy failed', 'error');
+  }
+  toast(`Copied ${words.length} ${label}`, 'success');
 }

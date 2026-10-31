@@ -1,7 +1,7 @@
 import * as store from '../store.js';
 import * as dict from '../dictionary.js';
 import { speak, supported } from '../speech.js';
-import { h, icon, bar, defBlock, state, toast, skeleton } from '../ui.js';
+import { h, icon, bar, defBlock, state, toast, skeleton, copyWords } from '../ui.js';
 import { getList } from '../data.js';
 import { dotClass } from './lists.js';
 
@@ -54,7 +54,9 @@ export function list(root, { id }) {
     h('section', { class: 'modes' }, MODES.map(([mode, label, ic], i) =>
       h('a', { class: 'mode card' + (i === 0 ? ' primary' : ''), href: `#/study/${L.id}/${mode}` },
         icon(ic, 26), h('div', { class: 'mode-title' }, label)))),
-    h('h2', { class: 'section-title' }, 'Words'),
+    h('div', { class: 'row-between' },
+      h('h2', { class: 'section-title' }, 'Words'),
+      h('button', { class: 'btn ghost', type: 'button', onclick: () => copyWords(L.words) }, icon('copy', 18), 'Copy words')),
     h('div', { class: 'card rows' }, rows),
     h('div', { class: 'center pad' }, h('button', {
       class: 'btn ghost',

@@ -10,7 +10,7 @@ const GAP = [0, 1, 2, 4, 8, 16]; // days until next review per box
 const state = {
   recs: new Map(),
   daily: new Map(),
-  settings: { goal: 20, speech: true, theme: 'auto' }
+  settings: { name: '', goal: 20, speech: true, theme: 'auto' }
 };
 const subs = new Set();
 export const subscribe = fn => (subs.add(fn), () => subs.delete(fn));
@@ -177,6 +177,7 @@ export function nextList() {
 export function exportData() {
   return {
     app: 'evl', version: 1, exported: new Date().toISOString(),
+    user: state.settings.name || '',
     settings: state.settings,
     words: [...state.recs.values()],
     daily: [...state.daily.values()]
@@ -202,13 +203,19 @@ export async function importData(obj) {
   state.daily = new Map(daily.map(d => [d.date, d]));
   if (obj.settings) {
     const s = obj.settings;
+    const imported = String(obj.user || s.name || '').trim().slice(0, 40);
     state.settings = {
+      name: imported || state.settings.name || '',
       goal: [10, 20, 30, 50, 100].includes(+s.goal) ? +s.goal : 20,
       speech: s.speech !== false,
       theme: s.theme === 'dark' ? 'dark' : 'light'
     };
     await db.put('meta', { key: 'settings', value: { ...state.settings } });
     applyTheme();
+  }
+  else if (obj.user) {
+    state.settings.name = String(obj.user).trim().slice(0, 40) || state.settings.name;
+    await db.put('meta', { key: 'settings', value: { ...state.settings } });
   }
   emit();
   return words.length;

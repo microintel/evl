@@ -195,6 +195,8 @@ a.card:active, .mode:active, .opt:active { transform: scale(.98); }
 .list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
 .list-card { display: grid; gap: 8px; }
 .list-card > * + * { margin-top: 0; }
+.card-actions { display: inline-flex; align-items: center; gap: 4px; margin: -8px -8px -8px 0; }
+.icon-btn.sm { width: 36px; height: 36px; }
 .list-num { font-size: 36px; font-weight: 780; letter-spacing: -.03em; line-height: 1; }
 
 .modes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
@@ -597,3 +599,5 @@ body.studying #net.on { display: none; }
 .tq-nav .tq-link { padding: 10px 2px; }
 .tq-nav .tq-link:disabled { opacity: .3; }
 .tq-answer .btn.sel { box-shadow: 0 0 0 2px var(--accent); }
+
+.row .input[type="text"] { width: 52%; max-width: 220px; min-height: 40px; text-align: right; }

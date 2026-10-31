@@ -38,6 +38,13 @@ export function progress(root) {
       h('div', { class: 'col-bar-wrap' }, h('div', { class: 'col-bar' + (d.reviewed ? '' : ' empty'), style: `height:${Math.max(4, d.reviewed / maxDay * 100)}%` })),
       h('span', { class: 'col-label' }, DAYS[d.day.getDay()]))));
 
+  const nameInput = h('input', {
+    class: 'input', type: 'text', placeholder: 'Your name', maxlength: '40', autocomplete: 'name', spellcheck: 'false',
+    value: s.name || '',
+    onchange: e => { e.target.value = e.target.value.trim(); store.setSetting('name', e.target.value); }
+  });
+  const fileSlug = n => n.trim().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '');
+
   const fileInput = h('input', {
     type: 'file', accept: 'application/json,.json', hidden: true,
     onchange: async e => {
@@ -45,7 +52,8 @@ export function progress(root) {
       if (!f) return;
       try {
         const n = await store.importData(JSON.parse(await f.text()));
-        toast(`${n} imported`, 'success');
+        const who = store.settings().name;
+        toast(who ? `${n} imported for ${who}` : `${n} imported`, 'success');
         rerender();
       } catch (err) { toast('Import failed', 'error'); }
       e.target.value = '';
@@ -76,6 +84,7 @@ export function progress(root) {
       : null,
     h('h2', { class: 'section-title' }, 'Settings'),
     h('section', { class: 'card rows' },
+      h('div', { class: 'row static' }, h('span', { class: 'grow' }, 'Name'), nameInput),
       h('div', { class: 'row static' }, h('span', { class: 'grow' }, 'Daily goal'),
         seg(GOALS.map(g => [g, String(g)]), s.goal, v => store.setSetting('goal', v))),
       h('div', { class: 'row static' }, h('span', { class: 'grow' }, 'Audio'),
@@ -87,8 +96,11 @@ export function progress(root) {
       h('div', { class: 'btn-row' },
         h('button', {
           class: 'btn', onclick: () => {
+            const nm = nameInput.value.trim();
+            if (nm !== (store.settings().name || '')) store.setSetting('name', nm);
+            const slug = fileSlug(nm);
             const blob = new Blob([JSON.stringify(store.exportData(), null, 2)], { type: 'application/json' });
-            const a = h('a', { href: URL.createObjectURL(blob), download: `evl-backup-${store.dayKey()}.json` });
+            const a = h('a', { href: URL.createObjectURL(blob), download: `evl-backup-${slug ? slug + '-' : ''}${store.dayKey()}.json` });
             document.body.append(a); a.click(); a.remove();
             toast('Exported', 'success');
           }

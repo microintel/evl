@@ -1,5 +1,5 @@
 import * as store from '../store.js';
-import { h, bar, pageHead, icon, state } from '../ui.js';
+import { h, bar, pageHead, icon, state, copyWords } from '../ui.js';
 import { LISTS, WORDS } from '../data.js';
 
 const FILTERS = [['all', 'All'], ['progress', 'In progress'], ['new', 'Not started'], ['done', 'Completed']];
@@ -34,7 +34,12 @@ export function lists(root) {
       h('a', { class: 'list-card card', href: '#/list/' + l.id },
         h('div', { class: 'row-between' },
           h('span', { class: 'eyebrow' }, 'List'),
-          s.due ? h('span', { class: 'badge' }, `${s.due} due`) : null),
+          h('span', { class: 'card-actions' },
+            s.due ? h('span', { class: 'badge' }, `${s.due} due`) : null,
+            h('button', {
+              class: 'icon-btn sm', type: 'button', 'aria-label': `Copy words of List ${l.id}`, title: 'Copy words',
+              onclick: e => { e.preventDefault(); e.stopPropagation(); copyWords(l.words); }
+            }, icon('copy', 18)))),
         h('div', { class: 'list-num' }, String(l.id)),
         bar(s.mastered, s.learning, s.total),
         h('div', { class: 'muted small' }, `${s.mastered}/${s.total} mastered`)))));
