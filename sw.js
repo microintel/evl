@@ -1,4 +1,4 @@
-const CACHE = 'evl-v9';
+const CACHE = 'evl-v10';
 const SHELL = [
   './', 'index.html', 'styles.css', 'words_all.json', 'manifest.webmanifest', 'favicon.ico', 'favicon-32.png', 'favicon-64.png',
   'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png',
