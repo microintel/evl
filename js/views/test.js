@@ -2,9 +2,8 @@
 // Answers + finished sessions live in the existing 'meta' store, so they survive restarts and work offline.
 import * as db from '../db.js';
 import * as dict from '../dictionary.js';
-import * as store from '../store.js';
 import { speak, supported } from '../speech.js';
-import { WORDS } from '../data.js';
+import { WORDS, LISTS, getList } from '../data.js';
 import { h, icon, pageHead, shuffle, defBlock } from '../ui.js';
 
 const KEY = 'tests';
@@ -18,11 +17,9 @@ async function load() {
 }
 const persist = () => db.put('meta', { key: KEY, value: data }).catch(() => {});
 
-// Days use the same "words per day" goal as the rest of the app (Progress -> daily goal).
+// A day is one list from the Lists tab: Day 1 = List 1 (its 20 words), Day 2 = List 2, and so on.
 function layout() {
-  const words = [...WORDS.values()];
-  const pd = Math.max(1, Math.round(+store.settings().goal) || 20);
-  return { words, pd, days: Math.ceil(words.length / pd), of: d => words.slice((d - 1) * pd, d * pd) };
+  return { days: LISTS.length, size: LISTS.length ? LISTS[0].words.length : 20, of: d => (getList(d) || { words: [] }).words };
 }
 function overall() {
   let tested = 0, known = 0;
@@ -66,7 +63,7 @@ export async function testHome(root) {
     : null;
 
   root.append(
-    pageHead('Vocabulary test', `${L.pd} words a day · ${L.days} days`),
+    pageHead('Vocabulary test', `${L.days} days · ${L.size} words each`),
     h('div', { class: 'tqw' },
       hero,
       h('button', { class: 'btn primary wide', onclick: () => { location.hash = `#/test/run/${next || 1}`; } },
@@ -87,7 +84,8 @@ export async function testRun(root, params) {
   const pick = shuffle(L.of(day)).map(w => w.id);                  // the day's words, in a shuffled order
   const n = pick.length;
   if (!n) { location.replace('#/test'); return; }
-  let i = 0, known = 0, answered = 0, saved = false, alive = true;
+  const mine = {};                                                  // answers given in this run: id -> 1 | 0
+  let i = 0, sess = null, alive = true;
 
   const prog = h('i', { style: 'width:0%' });
   const count = h('span', { class: 'tq-count' });
@@ -100,32 +98,37 @@ export async function testRun(root, params) {
     live,
     body);
 
+  const tally = () => { let a = 0, k = 0; for (const id of pick) if (mine[id] !== undefined) { a++; k += mine[id]; } return { a, k }; };
   // live result: this day's score + how many words you know overall, updated after every answer
   function paintLive() {
-    const o = overall();
+    const t = tally(), o = overall();
     live.replaceChildren(
-      h('div', { class: 'tq-pct' }, answered ? pctText(known, answered) : '–'),
-      h('div', { class: 'tq-sub' }, `${known} known · ${answered - known} not yet`),
+      h('div', { class: 'tq-pct' }, t.a ? pctText(t.k, t.a) : '–'),
+      h('div', { class: 'tq-sub' }, `${t.k} known · ${t.a - t.k} not yet`),
       h('div', { class: 'tq-sub' }, `Overall ${o.known} / ${o.total} known`));
   }
-  function saveSession() {
-    if (saved || !answered) return;
-    saved = true;
-    data.sessions.unshift({ ts: Date.now(), day, n: answered, known });
-    data.sessions.length = Math.min(data.sessions.length, 60);
+  function saveSession() {                                          // one session per run, updated if you go back and change answers
+    const t = tally();
+    if (!t.a) return;
+    if (!sess) { sess = { ts: Date.now(), day, n: t.a, known: t.k }; data.sessions.unshift(sess); data.sessions.length = Math.min(data.sessions.length, 60); }
+    else { sess.n = t.a; sess.known = t.k; }
     persist();
   }
+  const go = to => { i = Math.max(0, Math.min(n, to)); show(); };
   const answer = yes => {
-    data.answers[pick[i]] = yes ? 1 : 0;
-    answered++; if (yes) known++;
-    persist(); i++; paintLive(); show();
+    mine[pick[i]] = yes ? 1 : 0;
+    data.answers[pick[i]] = mine[pick[i]];
+    persist(); paintLive(); go(i + 1);
   };
+  const nav = nextLabel => h('div', { class: 'tq-nav' },
+    h('button', { class: 'tq-link', disabled: i === 0, onclick: () => go(i - 1) }, '‹ Back'),
+    nextLabel ? h('button', { class: 'tq-link', onclick: () => go(i + 1) }, nextLabel + ' ›') : null);
 
   function show() {
     count.textContent = `Day ${day} · ${Math.min(i + 1, n)} / ${n}`;
     prog.style.width = (i / n * 100) + '%';
     if (i >= n) return finish();
-    const w = WORDS.get(pick[i]);
+    const w = WORDS.get(pick[i]), cur = mine[pick[i]];
     const meaning = h('div', { class: 'tq-meaning' });
     body.replaceChildren(
       h('div', { class: 'tq-word' }, w.word),
@@ -139,26 +142,30 @@ export async function testRun(root, params) {
         } }, 'Meaning')),
       meaning,
       h('div', { class: 'grid-2 tq-answer' },
-        h('button', { class: 'btn', onclick: () => answer(false) }, "Don't know"),
-        h('button', { class: 'btn primary', onclick: () => answer(true) }, 'I know it')));
+        h('button', { class: 'btn' + (cur === 0 ? ' sel' : ''), onclick: () => answer(false) }, "Don't know"),
+        h('button', { class: 'btn primary' + (cur === 1 ? ' sel' : ''), onclick: () => answer(true) }, 'I know it')),
+      nav(cur === undefined ? 'Skip' : 'Next'));
   }
 
   function finish() {
     saveSession();
+    const t = tally();
     body.replaceChildren(
       h('div', { class: 'tq-result' },
         h('div', { class: 'big-icon' }, icon('check', 40)),
-        h('div', { class: 'big-num' }, `${known} / ${answered}`),
-        h('p', { class: 'muted' }, `Day ${day} · ${pctText(known, answered)}`),
+        h('div', { class: 'big-num' }, `${t.k} / ${t.a}`),
+        h('p', { class: 'muted' }, `Day ${day} · ${pctText(t.k, t.a)}${t.a < n ? ` · ${n - t.a} skipped` : ''}`),
         h('div', { class: 'btn-row' },
           day < L.days ? h('button', { class: 'btn primary', onclick: () => { location.hash = `#/test/run/${day + 1}`; } }, `Day ${day + 1}`) : null,
-          h('button', { class: 'btn', onclick: exit }, 'Done'))));
+          h('button', { class: 'btn', onclick: exit }, 'Done'))),
+      nav(null));
   }
 
   const onKey = e => {
-    if (i >= n) return;
-    if (e.key === 'ArrowRight' || e.key === 'k') answer(true);
-    else if (e.key === 'ArrowLeft' || e.key === 'd') answer(false);
+    if (e.key === 'ArrowLeft') go(i - 1);
+    else if (e.key === 'ArrowRight') go(i + 1);
+    else if (i < n && e.key === 'k') answer(true);
+    else if (i < n && e.key === 'd') answer(false);
   };
   document.addEventListener('keydown', onKey);
   const onHide = () => saveSession();

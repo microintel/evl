@@ -591,3 +591,9 @@ body.studying #net.on { display: none; }
 .td.full { border-color: transparent; background: var(--accent-soft); }
 .td.top { border-color: transparent; background: var(--good-soft); }
 .tq-hrow small { font-size: 13px; }
+
+/* vocabulary test — back / next */
+.tq-nav { display: flex; justify-content: space-between; width: 100%; margin-top: 4px; }
+.tq-nav .tq-link { padding: 10px 2px; }
+.tq-nav .tq-link:disabled { opacity: .3; }
+.tq-answer .btn.sel { box-shadow: 0 0 0 2px var(--accent); }
