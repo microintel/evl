@@ -1,9 +1,9 @@
-const CACHE = 'evl-v13';
+const CACHE = 'evl-v14';
 const SHELL = [
   './', 'index.html', 'styles.css', 'words_all.json', 'manifest.webmanifest', 'favicon.ico', 'favicon-32.png', 'favicon-64.png',
   'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png',
   'js/main.js', 'js/db.js', 'js/data.js', 'js/store.js', 'js/dictionary.js', 'js/speech.js',
-  'js/router.js', 'js/ui.js', 'js/pdf.js',
+  'js/router.js', 'js/ui.js', 'js/pdf.js', 'js/family.js',
   'js/views/home.js', 'js/views/lists.js', 'js/views/list.js', 'js/views/review.js',
   'js/views/study.js', 'js/views/progress.js', 'js/views/tools.js', 'js/views/worksheet.js', 'js/views/reels.js', 'js/views/test.js'
 ];

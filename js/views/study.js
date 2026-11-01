@@ -3,6 +3,7 @@ import * as dict from '../dictionary.js';
 import { speak, stop, supported } from '../speech.js';
 import { h, icon, shuffle, sample, mask, defBlock, kbd, state, skeleton } from '../ui.js';
 import { WORDS, getList } from '../data.js';
+import { familyButton } from '../family.js';
 
 export function study(root, { list, mode }) {
   const isReview = list === 'review';
@@ -100,7 +101,9 @@ export function study(root, { list, mode }) {
       h('div', { class: 'fc', onclick: reveal },
         h('div', { class: 'fc-word' }, w.word),
         def?.phonetic ? h('div', { class: 'muted' }, def.phonetic) : null,
-        supported ? h('button', { class: 'icon-btn big', 'aria-label': 'Pronounce', onclick: e => { e.stopPropagation(); speak(w.word, true); } }, icon('volume', 26)) : null,
+        h('div', { class: 'fc-actions' },
+          supported ? h('button', { class: 'icon-btn big', 'aria-label': 'Pronounce', onclick: e => { e.stopPropagation(); speak(w.word, true); } }, icon('volume', 26)) : null,
+          familyButton(w.word, 'icon-btn big', 26)),
         back),
       actions));
     speak(w.word);

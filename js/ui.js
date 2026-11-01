@@ -43,7 +43,8 @@ const PATHS = {
   mute: '<path d="M11 5L6 9H3v6h3l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/>',
   download: '<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
   copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',
-  inbox: '<path d="M3 13l3-8h12l3 8v6H3z"/><path d="M3 13h5l1 3h6l1-3h5"/>'
+  inbox: '<path d="M3 13l3-8h12l3 8v6H3z"/><path d="M3 13h5l1 3h6l1-3h5"/>',
+  family: '<circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="15" r="2.5"/><circle cx="19" cy="15" r="2.5"/><path d="M12 7.5V11M12 11l-5.5 2.2M12 11l5.5 2.2"/><path d="M8 20.5h8"/>'
 };
 
 export function icon(name, size = 22) {

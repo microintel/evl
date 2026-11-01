@@ -4,6 +4,7 @@ import { speak, stop, supported } from '../speech.js';
 import { h, icon, pageHead, shuffle, state } from '../ui.js';
 import { LISTS } from '../data.js';
 import * as db from '../db.js';
+import { familyButton } from '../family.js';
 
 const PER_DAY = [10, 20, 30, 50, 100];
 const PALETTE = ['#2f45c9', '#0f7a45', '#a85f00', '#b3325a', '#6a35c2', '#0c7585', '#8a3b12', '#2b5d8f'];
@@ -175,7 +176,9 @@ export function reelsPlay(root, params) {
       h('div', { class: 'reel-inner' },
         h('span', { class: 'reel-day' }, `Day ${item.day}`),
         h('div', { class: 'reel-word' }, item.w.word),
-        supported ? h('button', { class: 'reels-round', 'aria-label': 'Pronounce', onclick: () => speak(item.w.word, true) }, icon('volume', 26)) : null,
+        h('div', { class: 'reel-actions' },
+          supported ? h('button', { class: 'reels-round', 'aria-label': 'Pronounce', onclick: () => speak(item.w.word, true) }, icon('volume', 26)) : null,
+          familyButton(item.w.word, 'reels-round', 26)),
         box),
       i === startAt ? h('div', { class: 'reel-hint' }, h('span', { class: 'reel-up' }, icon('chevron', 22)), 'Swipe up') : null);
     steps[i] = { item, box };

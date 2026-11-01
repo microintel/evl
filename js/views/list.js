@@ -4,6 +4,7 @@ import { speak, supported } from '../speech.js';
 import { h, icon, bar, defBlock, state, toast, skeleton, copyWords } from '../ui.js';
 import { getList } from '../data.js';
 import { dotClass } from './lists.js';
+import { familyButton } from '../family.js';
 
 const MODES = [
   ['mixed', 'Learn', 'mixed'],
@@ -27,6 +28,7 @@ export function list(root, { id }) {
         h('span', { class: 'dot ' + dotClass(store.status(w.id)) }),
         h('span', { class: 'grow word' }, w.word),
         r ? h('span', { class: 'muted small' }, `${r.right}✓ ${r.wrong}✗`) : null,
+        familyButton(w.word),
         supported ? h('button', { class: 'icon-btn', 'aria-label': 'Pronounce ' + w.word, onclick: e => { e.stopPropagation(); speak(w.word, true); } }, icon('volume', 20)) : null),
       panel);
     async function load() {
