@@ -5,6 +5,7 @@ import { h, icon, pageHead, shuffle, state } from '../ui.js';
 import { LISTS } from '../data.js';
 import * as db from '../db.js';
 import { familyButton } from '../family.js';
+import * as R from '../rewards.js';
 
 const PER_DAY = [10, 20, 30, 50, 100];
 const PALETTE = ['#2f45c9', '#0f7a45', '#a85f00', '#b3325a', '#6a35c2', '#0c7585', '#8a3b12', '#2b5d8f'];
@@ -137,13 +138,17 @@ export function reelsPlay(root, params) {
   const scroller = h('div', { class: 'reels swiper', tabindex: '-1' }, wrapper);
   const counter = h('span', { class: 'reels-count' }, `1 / ${queue.length}`);
   const prog = h('i', { style: 'width:0%' });
+  const todayEl = h('span', { class: 'reels-today', title: 'Words learned today' });
+  const paintToday = n => todayEl.replaceChildren(R.bi('stars', 14), ` ${n} today`);
+  paintToday(R.reelsToday());
+  let seenHere = 0;
   const soundBtn = h('button', { class: 'reels-btn', 'aria-label': 'Toggle sound', onclick: () => { sound = !sound; paintSound(); if (!sound) stop(); else if (active >= 0) speak(queue[active].w.word, true); } });
   const paintSound = () => { if (!supported) { soundBtn.hidden = true; return; } soundBtn.replaceChildren(icon(sound ? 'volume' : 'mute', 22)); soundBtn.classList.toggle('off', !sound); };
   paintSound();
   const exit = () => location.replace('#/reels');
   const top = h('header', { class: 'reels-top' },
     h('button', { class: 'reels-btn', 'aria-label': 'Close', onclick: exit }, icon('x', 22)),
-    h('div', { class: 'reels-prog' }, prog), counter, soundBtn);
+    h('div', { class: 'reels-prog' }, prog), todayEl, counter, soundBtn);
   root.append(scroller, top);
 
   const steps = [];
@@ -212,6 +217,9 @@ export function reelsPlay(root, params) {
     if (i === active) return;
     if (!steps[i]) { if (serial && i >= queue.length) savePrefs({ serial: null }); return; }   // reached the end -> nothing left to resume
     active = i;
+    const seen = R.reelSeen(queue[i].w.id);
+    paintToday(seen.count);
+    if (seen.isNew) { seenHere++; R.float('+2 XP', todayEl); if (!matchMedia('(prefers-reduced-motion: reduce)').matches) todayEl.animate([{ transform: 'scale(1.3)' }, { transform: 'scale(1)' }], { duration: 260 }); }
     if (serial) savePrefs({ serial: { pd, a, b, idx: queue[i].gi } });
     counter.textContent = `${i + 1} / ${queue.length}`;
     prog.style.width = ((i + 1) / queue.length * 100).toFixed(1) + '%';
@@ -258,6 +266,7 @@ export function reelsPlay(root, params) {
 
   return () => {
     alive = false;
+    if (seenHere >= 5) R.sessionDone();
     if (io) io.disconnect();
     if (swiper) { try { swiper.destroy(true, false); } catch { /* ignore */ } }
     document.body.classList.remove('studying');

@@ -1,5 +1,6 @@
 import * as data from './data.js';
 import * as store from './store.js';
+import * as rewards from './rewards.js';
 import { route, start, onChange } from './router.js';
 import { h, icon, bar, state, toast } from './ui.js';
 import { home } from './views/home.js';
@@ -12,6 +13,7 @@ import { reelsSetup, reelsPlay } from './views/reels.js';
 import { study } from './views/study.js';
 import { testHome, testRun } from './views/test.js';
 import { progress } from './views/progress.js';
+import { blitz } from './views/blitz.js';
 
 const TABS = [
   ['/', 'Home', 'home'],
@@ -23,7 +25,7 @@ const TABS = [
 
 function activeTab(path) {
   if (path.startsWith('/study/review') || path === '/review' || path === '/worksheet') return '/tools';
-  if (path.startsWith('/test')) return '/tools';
+  if (path.startsWith('/test') || path === '/blitz') return '/tools';
   if (path.startsWith('/reels')) return '/reels';
   if (path.startsWith('/list') || path.startsWith('/study')) return '/lists';
   return path;
@@ -85,6 +87,7 @@ async function boot() {
   const view = document.getElementById('view');
   try {
     await Promise.all([data.load(), store.init()]);
+    await rewards.init();
   } catch (e) {
     document.getElementById('nav').replaceChildren();
     view.replaceChildren(
@@ -106,6 +109,7 @@ async function boot() {
   route('/test', testHome);
   route('/test/run/:day', testRun);
   route('/worksheet', worksheet);
+  route('/blitz', blitz);
   route('/reels', reelsSetup);
   route('/reels/:pd/:from/:to', reelsPlay);
   route('/reels/:pd/:from/:to/:mode', reelsPlay);

@@ -74,6 +74,21 @@ export function bar(mastered, learning, total, cls = '') {
     h('i', { class: 'l', style: `width:${pct(learning)}` }));
 }
 
+// List progress bar: mastered (dark green) / learnt (green) / opened-only (amber) shares of a total.
+export function listBar(st, cls = '') {
+  const pct = n => (st.total ? (n / st.total) * 100 : 0).toFixed(2) + '%';
+  return h('div', { class: 'bar ' + cls },
+    h('i', { class: 'm', style: `width:${pct(st.mastered)}` }),
+    h('i', { class: 'g', style: `width:${pct(st.learnt - st.mastered)}` }),
+    h('i', { class: 'o', style: `width:${pct(st.read - st.learnt)}` }));
+}
+
+// Three counters under a list bar: how much was opened, learnt and mastered.
+export function listLegend(st) {
+  const item = (cls, n, label) => h('span', { class: 'lg' }, h('span', { class: 'dot ' + cls }), h('b', null, String(n)), ' ' + label);
+  return h('div', { class: 'legend' }, item('o', st.read, 'opened'), item('g', st.learnt, 'learnt'), item('m', st.mastered, 'mastered'));
+}
+
 export function pageHead(title, sub, right) {
   return h('header', { class: 'page-head' },
     h('div', null, h('h1', null, title), sub ? h('p', { class: 'sub' }, sub) : null),

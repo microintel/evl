@@ -10,6 +10,7 @@ const GAP = [0, 1, 2, 4, 8, 16]; // days until next review per box
 const state = {
   recs: new Map(),
   daily: new Map(),
+  opened: new Set(),   // words whose meaning was opened/read (no quiz answer needed)
   settings: { name: '', goal: 20, speech: true, theme: 'auto' }
 };
 const subs = new Set();
@@ -33,6 +34,8 @@ export async function init() {
     daily.forEach(d => state.daily.set(d.date, d));
     const s = meta.find(m => m.key === 'settings');
     if (s) Object.assign(state.settings, s.value);
+    const o = meta.find(m => m.key === 'opened');
+    if (o && Array.isArray(o.value)) state.opened = new Set(o.value);
   } catch (e) {
     console.warn('IndexedDB unavailable — progress will not persist this session', e);
     persistent = false;
@@ -62,6 +65,19 @@ export function status(id) {
   const r = state.recs.get(id);
   return !r ? 'new' : r.box >= MASTERED ? 'mastered' : 'learning';
 }
+// Four visible levels per word: new -> opened (read) -> learnt (answered right once) -> mastered.
+export function level(id) {
+  const r = state.recs.get(id);
+  if (r) return r.box >= MASTERED ? 'mastered' : r.box >= 1 ? 'learnt' : 'opened';
+  return state.opened.has(id) ? 'opened' : 'new';
+}
+export function markOpened(id) {
+  if (state.opened.has(id) || state.recs.has(id)) return false;
+  state.opened.add(id);
+  safe(db.put('meta', { key: 'opened', value: [...state.opened] }));
+  emit();
+  return true;
+}
 export const isDue = id => { const r = state.recs.get(id); return !!r && r.due <= Date.now(); };
 
 export function record(id, correct) {
@@ -88,13 +104,17 @@ export function record(id, correct) {
 
 /* ---------- queries ---------- */
 export function listStats(list) {
-  let n = 0, l = 0, m = 0, due = 0;
+  let n = 0, l = 0, m = 0, due = 0, read = 0, learnt = 0;
   for (const w of list.words) {
     const s = status(w.id);
     if (s === 'new') n++; else if (s === 'learning') l++; else m++;
     if (isDue(w.id)) due++;
+    const lv = level(w.id);
+    if (lv !== 'new') read++;
+    if (lv === 'learnt' || lv === 'mastered') learnt++;
   }
-  return { new: n, learning: l, mastered: m, due, total: list.words.length };
+  // read = opened or beyond, learnt = answered right at least once (includes mastered)
+  return { new: n, learning: l, mastered: m, due, total: list.words.length, read, learnt };
 }
 
 export function totals() {
@@ -121,6 +141,7 @@ export function upcoming() {
   return out;
 }
 
+export const dayCount = k => state.daily.get(k)?.reviewed || 0;
 export const today = () => state.daily.get(dayKey()) || { date: dayKey(), reviewed: 0, right: 0 };
 
 export function recentDays(n) {
@@ -180,6 +201,7 @@ export function exportData() {
     user: state.settings.name || '',
     settings: state.settings,
     words: [...state.recs.values()],
+    opened: [...state.opened],
     daily: [...state.daily.values()]
   };
 }
@@ -201,6 +223,8 @@ export async function importData(obj) {
   await db.putMany('words', words); await db.putMany('daily', daily);
   state.recs = new Map(words.map(r => [r.id, r]));
   state.daily = new Map(daily.map(d => [d.date, d]));
+  state.opened = new Set((Array.isArray(obj.opened) ? obj.opened : []).filter(id => WORDS.has(id)));
+  await db.put('meta', { key: 'opened', value: [...state.opened] });
   if (obj.settings) {
     const s = obj.settings;
     const imported = String(obj.user || s.name || '').trim().slice(0, 40);
@@ -222,8 +246,9 @@ export async function importData(obj) {
 }
 
 export async function resetAll() {
-  state.recs.clear(); state.daily.clear();
+  state.recs.clear(); state.daily.clear(); state.opened.clear();
   await safe(db.clear('words')); await safe(db.clear('daily'));
+  await safe(db.put('meta', { key: 'opened', value: [] }));
   emit();
 }
 
@@ -234,8 +259,9 @@ export async function resetList(listId) {
   const db_ = await db.open();
   await new Promise(res => {
     const t = db_.transaction('words', 'readwrite');
-    list.words.forEach(w => { recs.delete(w.id); t.objectStore('words').delete(w.id); });
+    list.words.forEach(w => { recs.delete(w.id); state.opened.delete(w.id); t.objectStore('words').delete(w.id); });
     t.oncomplete = res; t.onerror = res;
   });
+  safe(db.put('meta', { key: 'opened', value: [...state.opened] }));
   emit();
 }

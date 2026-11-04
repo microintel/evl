@@ -35,6 +35,10 @@ It remembers what you know and what you find tricky, and brings words back at th
 - **Set a daily goal** – Choose 10, 20, 30, 50 or 100 words a day and watch your progress ring fill up.
 - **Build a streak** – Study every day to keep your streak going.
 - **Track your progress** – See how many words you have mastered, your accuracy, a 14-day activity chart, and the words you find trickiest.
+- **Earn rewards** – Every correct answer gives **+10 XP** (levels Beginner → Master), with sounds, vibration, a green pulse or a shake, a combo counter, and occasional *Lucky word: 2x XP*. Finish a list for 1–3 stars and confetti, unlock badges, fill the daily ring for a celebration, and open the daily mystery chest after your first session.
+- **Keep your streak safe** – A streak freeze automatically covers one missed day. You start with one and earn another every 7 days.
+- **60-second challenge** – In Tools (or on Home): answer as many meanings as you can in a minute and beat your high score.
+- **Reels counter** – Reels shows how many words you have learned today, live.
 - **Pick your look** – Switch between a White and a Black theme.
 
 ## Use it on your phone

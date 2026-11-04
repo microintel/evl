@@ -4,6 +4,7 @@ import { speak, stop, supported } from '../speech.js';
 import { h, icon, shuffle, sample, mask, defBlock, kbd, state, skeleton } from '../ui.js';
 import { WORDS, getList } from '../data.js';
 import { familyButton } from '../family.js';
+import * as R from '../rewards.js';
 
 export function study(root, { list, mode }) {
   const isReview = list === 'review';
@@ -22,6 +23,8 @@ export function study(root, { list, mode }) {
   }
 
   document.body.classList.add('studying');
+  R.beginSession();
+  let retried = false;
   let queue = shuffle(ids).map(id => ({ id, first: true }));
   let idx = 0;
   let res = { right: 0, wrong: 0, missed: [] };
@@ -44,13 +47,15 @@ export function study(root, { list, mode }) {
       h('header', { class: 'study-top' },
         h('button', { class: 'icon-btn', 'aria-label': 'Close', onclick: exit }, icon('x', 24)),
         h('div', { class: 'bar thick' }, h('i', { class: 'm', style: `width:${pct}%` })),
+        R.xpChip(),
         h('span', { class: 'count' }, `${Math.min(idx + 1, queue.length)}/${queue.length}`)),
       content);
   }
 
-  function answer(item, correct) {
+  function answer(item, correct, anchor) {
     if (!item.first) return;
     store.record(item.id, correct);
+    R.answered(correct, anchor);
     if (correct) res.right++;
     else { res.wrong++; res.missed.push(item.id); queue.push({ id: item.id, first: false }); }
   }
@@ -76,6 +81,8 @@ export function study(root, { list, mode }) {
     if (kind === 'spell' && !def && !supported) kind = 'flash';
 
     dict.prefetch(queue.slice(idx + 1, idx + 4).map(q => WORDS.get(q.id).word));
+    store.markOpened(item.id);
+    R.beginWord(item.first);
     ({ flash, quiz, spell })[kind](item, w, def, token);
   }
 
@@ -84,14 +91,16 @@ export function study(root, { list, mode }) {
     let revealed = false;
     const back = h('div', { class: 'fc-back', hidden: true }, defBlock(def, 2, w.word));
     const actions = h('div', { class: 'study-actions' });
-    const done = ok => { answer(item, ok); advance(); };
+    const done = ok => { answer(item, ok, shell.querySelector('.fc')); advance(); };
     const showBtn = h('button', { class: 'btn primary', onclick: reveal }, 'Reveal', kbd('Space'));
     actions.append(showBtn);
+    const hint = h('p', { class: 'muted small center fc-hint' }, "Don't know it? That's fine. Tap Reveal to see the meaning.");
 
     function reveal() {
       if (revealed) return;
       revealed = true;
       back.hidden = false;
+      hint.textContent = 'Again: show it again soon · Know: got it';
       actions.replaceChildren(
         h('button', { class: 'btn bad', onclick: () => done(false) }, 'Again', kbd('1')),
         h('button', { class: 'btn good', onclick: () => done(true) }, 'Know', kbd('2')));
@@ -105,6 +114,7 @@ export function study(root, { list, mode }) {
           supported ? h('button', { class: 'icon-btn big', 'aria-label': 'Pronounce', onclick: e => { e.stopPropagation(); speak(w.word, true); } }, icon('volume', 26)) : null,
           familyButton(w.word, 'icon-btn big', 26)),
         back),
+      hint,
       actions));
     speak(w.word);
     keys = e => {
@@ -133,7 +143,7 @@ export function study(root, { list, mode }) {
         if (options[j].id === w.id) b.classList.add('right');
         else if (j === i) b.classList.add('wrong');
       });
-      answer(item, ok);
+      answer(item, ok, btns[i]);
       if (ok) { speak(w.word); later(advance, 800); }
       else {
         actions.replaceChildren(h('button', { class: 'btn primary', onclick: advance }, 'Continue', kbd('Enter')));
@@ -167,7 +177,7 @@ export function study(root, { list, mode }) {
       locked = true;
       input.disabled = true;
       const ok = !skip && guess === target;
-      answer(item, ok);
+      answer(item, ok, input);
       if (ok) {
         result.className = 'spell-result good';
         result.textContent = 'Correct';
@@ -206,6 +216,7 @@ export function study(root, { list, mode }) {
     shell.replaceChildren(
       h('div', { class: 'study-body summary' },
         state('success', 'Done'),
+        R.starsEl(acc),
         h('div', { class: 'grid-3 tight' },
           h('div', { class: 'stat card' }, h('div', { class: 'stat-num' }, `${acc}%`), h('div', { class: 'muted' }, 'Accuracy')),
           h('div', { class: 'stat card' }, h('div', { class: 'stat-num' }, String(res.right)), h('div', { class: 'muted' }, 'Right')),
@@ -216,10 +227,11 @@ export function study(root, { list, mode }) {
         h('div', { class: 'study-actions' },
           missed.length ? h('button', {
             class: 'btn', onclick: () => {
-              queue = missed.map(id => ({ id, first: false })); idx = 0; res = { right: 0, wrong: 0, missed: [] }; next();
+              retried = true; queue = missed.map(id => ({ id, first: false })); idx = 0; res = { right: 0, wrong: 0, missed: [] }; next();
             }
           }, 'Retry missed') : null,
           h('button', { class: 'btn primary', onclick: exit }, 'Done'))));
+    R.completeSession({ acc, total, mode, clean: !retried });
   }
 
   next();
@@ -227,6 +239,7 @@ export function study(root, { list, mode }) {
   return () => {
     alive = false;
     clearTimeout(timer);
+    R.endSession();
     document.body.classList.remove('studying');
     document.removeEventListener('keydown', onKey);
     stop();

@@ -1,5 +1,5 @@
 import * as store from '../store.js';
-import { h, bar, pageHead, icon, state, copyWords } from '../ui.js';
+import { h, listBar, listLegend, pageHead, icon, state, copyWords } from '../ui.js';
 import { LISTS, WORDS } from '../data.js';
 
 const FILTERS = [['all', 'All'], ['progress', 'In progress'], ['new', 'Not started'], ['done', 'Completed']];
@@ -24,16 +24,16 @@ export function lists(root) {
   function paint() {
     if (q) return paintSearch();
     const cards = LISTS.map(l => ({ l, s: store.listStats(l) })).filter(({ s }) => {
-      if (filter === 'progress') return s.mastered + s.learning > 0 && s.mastered < s.total;
-      if (filter === 'new') return s.new === s.total;
-      if (filter === 'done') return s.mastered === s.total;
+      if (filter === 'progress') return s.read > 0 && s.learnt < s.total;
+      if (filter === 'new') return s.read === 0;
+      if (filter === 'done') return s.learnt === s.total;
       return true;
     });
     if (!cards.length) return out.replaceChildren(state('empty', 'None'));
     out.replaceChildren(h('div', { class: 'list-grid' }, cards.map(({ l, s }) =>
-      h('a', { class: 'list-card card', href: '#/list/' + l.id },
+      h('a', { class: 'list-card card' + (s.learnt === s.total ? ' complete' : ''), href: '#/list/' + l.id },
         h('div', { class: 'row-between' },
-          h('span', { class: 'eyebrow' }, 'List'),
+          h('span', { class: 'eyebrow' }, 'List', s.learnt === s.total ? h('span', { class: 'done-tick' }, icon('check', 14)) : null),
           h('span', { class: 'card-actions' },
             s.due ? h('span', { class: 'badge' }, `${s.due} due`) : null,
             h('button', {
@@ -41,8 +41,8 @@ export function lists(root) {
               onclick: e => { e.preventDefault(); e.stopPropagation(); copyWords(l.words); }
             }, icon('copy', 18)))),
         h('div', { class: 'list-num' }, String(l.id)),
-        bar(s.mastered, s.learning, s.total),
-        h('div', { class: 'muted small' }, `${s.mastered}/${s.total} mastered`)))));
+        listBar(s),
+        listLegend(s)))));
   }
 
   function paintSearch() {
@@ -53,7 +53,7 @@ export function lists(root) {
     if (!hits.length) return out.replaceChildren(state('empty', 'No match'));
     out.replaceChildren(h('div', { class: 'card rows' }, hits.map(w =>
       h('a', { class: 'row', href: '#/list/' + w.list },
-        h('span', { class: 'dot ' + dotClass(store.status(w.id)) }),
+        h('span', { class: 'dot ' + dotClass(store.level(w.id)) }),
         h('span', { class: 'grow word' }, w.word),
         h('span', { class: 'muted small' }, 'List ' + w.list),
         icon('chevron', 18)))));
@@ -67,4 +67,4 @@ export function lists(root) {
   paint();
 }
 
-export const dotClass = s => (s === 'mastered' ? 'm' : s === 'learning' ? 'l' : 'n');
+export const dotClass = s => (s === 'mastered' ? 'm' : s === 'learnt' ? 'g' : s === 'opened' ? 'o' : s === 'learning' ? 'l' : 'n');

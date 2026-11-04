@@ -1,4 +1,5 @@
 import * as store from '../store.js';
+import * as R from '../rewards.js';
 import { h, bar, pageHead, toast, state } from '../ui.js';
 
 const rerender = () => window.dispatchEvent(new HashChangeEvent('hashchange'));
@@ -31,7 +32,7 @@ export function progress(root) {
   const boxes = store.boxCounts();
   const maxBox = Math.max(1, ...boxes);
   const hard = store.hardest(10);
-  const completed = LISTS.filter(l => store.listStats(l).mastered === l.words.length).length;
+  const completed = LISTS.filter(l => store.listStats(l).learnt === l.words.length).length;
 
   const chart = h('div', { class: 'chart' }, days.map(d =>
     h('div', { class: 'col', title: `${d.date}: ${d.reviewed}` },
@@ -64,9 +65,11 @@ export function progress(root) {
     pageHead('Progress'),
     h('section', { class: 'grid-4' },
       h('div', { class: 'stat card' }, h('div', { class: 'stat-num' }, String(t.mastered)), h('div', { class: 'muted' }, 'Mastered')),
-      h('div', { class: 'stat card' }, h('div', { class: 'stat-num' }, String(store.streak())), h('div', { class: 'muted' }, 'Day streak')),
+      h('div', { class: 'stat card' }, h('div', { class: 'stat-num' }, String(R.streak())), h('div', { class: 'muted' }, 'Day streak')),
       h('div', { class: 'stat card' }, h('div', { class: 'stat-num' }, acc == null ? '–' : acc + '%'), h('div', { class: 'muted' }, 'Accuracy')),
       h('div', { class: 'stat card' }, h('div', { class: 'stat-num' }, `${completed}/${LISTS.length}`), h('div', { class: 'muted' }, 'Lists done'))),
+    R.xpCard(),
+    R.badgesShelf(),
     h('section', { class: 'card' },
       h('div', { class: 'row-between' }, h('strong', null, 'Mastery'), h('span', { class: 'muted' }, `${t.mastered} mastered · ${t.learning} learning · ${t.new} new`)),
       bar(t.mastered, t.learning, t.total, 'thick')),
